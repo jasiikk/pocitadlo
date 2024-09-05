@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Počítadlo čárek</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #nameInput, #continueButton, #resetButton {
+            margin: 10px;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 20px;
+            border: none;
+            width: 200px;
+        }
+        #nameInput {
+            background-color: #e9dbcf;
+            color: #806248;
+        }
+        #continueButton, #resetButton {
+            background-color: #806248;
+            color: #e9dbcf;
+            cursor: pointer;
+        }
+        #counter {
+            width: 200px;
+            height: 100px;
+            border: 2px solid #806248;
+            border-radius: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            padding: 5px;
+            background-color: #e9dbcf;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        .tally-group {
+            display: inline-block;
+            position: relative;
+            margin-right: 10px;
+            margin-bottom: 5px;
+            opacity: 0;
+            animation: fadeIn 0.3s forwards;
+        }
+        .tally {
+            color: #806248;
+        }
+        .strike {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #806248;
+            transform: translateY(-50%);
+        }
+        #userName {
+            font-size: 18px;
+            font-weight: bold;
+            color: #a29b92;
+        }
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="nameForm">
+        <input type="text" id="nameInput" placeholder="Jméno">
+        <button id="continueButton">Pokračovat</button>
+    </div>
+    <div id="counterSection" style="display:none;">
+        <div id="counter"></div>
+        <div id="userName"></div>
+        <button id="resetButton">Resetovat čárky</button>
+    </div>
+
+    <script>
+        const nameInput = document.getElementById('nameInput');
+        const continueButton = document.getElementById('continueButton');
+        const resetButton = document.getElementById('resetButton');
+        const nameForm = document.getElementById('nameForm');
+        const counterSection = document.getElementById('counterSection');
+        const counter = document.getElementById('counter');
+        const userNameDisplay = document.getElementById('userName');
+
+        let tallyCount = parseInt(localStorage.getItem('tallyCount')) || 0; // Načte počet čárek z localStorage
+
+        continueButton.addEventListener('click', () => {
+            const name = nameInput.value.trim();
+            if (name) {
+                nameForm.style.display = 'none';
+                counterSection.style.display = 'block';
+                userNameDisplay.textContent = name;
+                updateCounter();
+            }
+        });
+
+        counter.addEventListener('click', () => {
+            tallyCount++;
+            localStorage.setItem('tallyCount', tallyCount); // Uloží počet čárek do localStorage
+            updateCounter();
+        });
+
+        resetButton.addEventListener('click', resetCounter);
+
+        function resetCounter() {
+            tallyCount = 0;
+            localStorage.setItem('tallyCount', tallyCount); // Uloží resetovaný počet čárek do localStorage
+            updateCounter();
+        }
+
+        function updateCounter() {
+            counter.innerHTML = '';
+            const fullGroups = Math.floor(tallyCount / 5);
+            const remainder = tallyCount % 5;
+
+            // Dynamické nastavení velikosti fontu
+            let fontSize = Math.max(10, 24 - Math.floor(tallyCount / 10));
+            counter.style.fontSize = fontSize + 'px';
+
+            for (let i = 0; i < fullGroups; i++) {
+                const group = document.createElement('span');
+                group.className = 'tally-group';
+                group.innerHTML = '<span class="tally">||||</span><span class="strike"></span>';
+                counter.appendChild(group);
+            }
+
+            if (remainder > 0) {
+                const group = document.createElement('span');
+                group.className = 'tally-group';
+                group.innerHTML = '<span class="tally">' + '|'.repeat(remainder) + '</span>';
+                counter.appendChild(group);
+            }
+        }
+
+        // Automatické vynulování ve 23:59
+        function checkResetTime() {
+            const now = new Date();
+            if (now.getHours() === 23 && now.getMinutes() === 59) {
+                resetCounter();
+            }
+        }
+
+        // Zkontroluje čas každou minutu
+        setInterval(checkResetTime, 60000); // 60 000 ms = 1 minuta
+
+        // Načte uložené čárky při načtení stránky
+        updateCounter();
+    </script>
+</body>
+</html>
